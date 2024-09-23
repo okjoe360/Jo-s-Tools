@@ -4,9 +4,10 @@ import {QRCodeCanvas} from 'qrcode.react';
 import Constants from '../services/constants';
 import ShorteningService from '../services/shortService';
 import Alert from '../components/Alert';
+import Loading from '../components/Loading';
 
-let constants = new Constants()
-const BASE_URL = constants.base_url + "/"
+
+
 const SearchPage = () => {
   let location = useLocation();
   const navigate = useNavigate();
@@ -16,18 +17,26 @@ const SearchPage = () => {
   const [linkData, setLinkData] = useState(null);
   const [fileData, setFileData] = useState(null);
   const [errorMssg, setErrorMssg] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+    let constants = new Constants()
+
+    const BASE_URL = constants.base_url + "/"
+    const HOST_NAME = window.location.hostname
+    const HOST_NAME1 = `${window.location.protocol}//${window.location.hostname}`;
 
   const getLinkData = async()=>{
+    setIsLoading(true);
     const loc = location.pathname.split('/')[1]
     setLink(loc);
     const res = await serve.query(loc);
+    setIsLoading(false);
     if(res.status === 404){
             setErrorMssg(res.message + ' , close to redirect back...');
             //setTimeout(()=>{navigate('/shortener')}, 2000)
         }
-    setLinkData(res)
+    setLinkData(res);
     if(res.type==="file") setFilePreview(res);
-
   }
 
   function setFilePreview(linkedData){
@@ -67,6 +76,8 @@ const SearchPage = () => {
   //      }, [linkData])
 
 
+  if (isLoading)return <Loading />
+
   if (!linkData || !linkData.data) return <div className='text-center mt-3'>{errorMssg ? <Alert alertType="warning" alertMssg={errorMssg} closeAlert={()=>{setErrorMssg(null);handleRedirect();}}/> : <h3>Loading...</h3>}</div>
 
   return (
@@ -74,13 +85,11 @@ const SearchPage = () => {
         <div className="row py-3">
             <div className="col-lg-6">
                 <div className="">
-                    <h6 className="">
-                        Your Link : <a href={"https://tools.joelokoniha.com/" + link} className="font-weight-bold" target="_blank">
-                            {"https://tools.joelokoniha.com/" + link}
-                            </a>
-                    </h6>
+                    <h6 className="">Your Link : {HOST_NAME + "/" + link}</h6>
                     <p className="">TITLE : {linkData.data.title}</p> 
                     <p className="">SHORT CODE : {link}</p>
+                    {linkData.type === 'url' && <a className="btn btn-info shadow" href={linkData.data.url} target='_blank'>Go To Your Link</a>
+        }
                     <p className=""><small className="text-muted">Created at {new Date(linkData.data.created_at).toLocaleDateString(undefined, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</small></p>
                 </div>
             </div>
